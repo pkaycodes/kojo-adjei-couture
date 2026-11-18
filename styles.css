@@ -973,8 +973,6 @@ h2{
   line-height:1.7;
   color:rgba(245,240,232,.4);
 }
-.footer-credit a{color:rgba(245,240,232,.62);border-bottom:1px solid rgba(245,240,232,.22)}
-.footer-credit a:hover{color:var(--brass-hi)}
 .footer-copy{color:rgba(245,240,232,.3)}
 
 /* ── lightbox ────────────────────────────────────────────── */
