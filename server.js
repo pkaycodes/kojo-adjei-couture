@@ -1,11 +1,11 @@
 'use strict';
 
 /**
- * Minimal static file server for the Kojo Adjei Couture preview site.
+ * Minimal static file server.
  *
  * Hostinger's Node.js hosting expects an application that listens on the port
- * it provides. This serves the files in this folder (index.html, styles.css,
- * script.js, assets/) directly, with no build step and no dependencies.
+ * it provides. This serves the files in this folder directly, with no build
+ * step and no dependencies.
  */
 
 const http = require('node:http');
@@ -38,6 +38,9 @@ const MIME_TYPES = {
   '.ttf': 'font/ttf',
   '.otf': 'font/otf',
   '.pdf': 'application/pdf',
+  '.mp4': 'video/mp4',
+  '.webm': 'video/webm',
+  '.mp3': 'audio/mpeg',
   '.webmanifest': 'application/manifest+json'
 };
 
@@ -55,8 +58,8 @@ function sendError(res, status, message, isHead) {
   res.end(isHead ? undefined : body);
 }
 
-/** Resolve a URL path to a real file inside ROOT, or null if it escapes ROOT. */
-function resolveFile(urlPath) {
+/** Resolve a URL path to a real path inside ROOT, or null if it escapes ROOT. */
+function resolvePath(urlPath) {
   let decoded;
   try {
     decoded = decodeURIComponent(urlPath);
@@ -64,13 +67,47 @@ function resolveFile(urlPath) {
     return null;
   }
 
-  const target = path.join(ROOT, path.normalize(decoded));
-  const resolved = path.resolve(target);
+  const resolved = path.resolve(path.join(ROOT, path.normalize(decoded)));
 
   // Block path traversal outside the project root.
   if (resolved !== ROOT && !resolved.startsWith(ROOT + path.sep)) return null;
 
   return resolved;
+}
+
+function statFile(filePath) {
+  try {
+    const stats = fs.statSync(filePath);
+    return stats.isFile() ? stats : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Parse a single "bytes=start-end" Range header. Returns null when unusable. */
+function parseRange(header, size) {
+  const match = /^bytes=(\d*)-(\d*)$/.exec(String(header).trim());
+  if (!match) return null;
+
+  const [, rawStart, rawEnd] = match;
+  if (rawStart === '' && rawEnd === '') return null;
+
+  let start;
+  let end;
+
+  if (rawStart === '') {
+    // Suffix range: last N bytes.
+    const suffixLength = Number(rawEnd);
+    if (!suffixLength) return null;
+    start = Math.max(size - suffixLength, 0);
+    end = size - 1;
+  } else {
+    start = Number(rawStart);
+    end = rawEnd === '' ? size - 1 : Math.min(Number(rawEnd), size - 1);
+  }
+
+  if (!Number.isFinite(start) || !Number.isFinite(end) || start > end || start >= size) return null;
+  return { start, end };
 }
 
 const server = http.createServer((req, res) => {
@@ -92,71 +129,92 @@ const server = http.createServer((req, res) => {
 
   if (pathname === '/') pathname = '/index.html';
 
-  const filePath = resolveFile(pathname);
-  if (!filePath) {
+  const requestedPath = resolvePath(pathname);
+  if (!requestedPath) {
     sendError(res, 403, 'Forbidden.', isHead);
     return;
   }
 
-  fs.stat(filePath, (statErr, stats) => {
-    // "Pretty" URLs: /collection -> collection.html, /collection/ -> collection/index.html
-    let finalPath = filePath;
-    let finalStats = stats;
+  // "Pretty" URLs: /menu -> menu.html, /menu/ -> menu/index.html
+  let finalPath = requestedPath;
+  let stats = statFile(finalPath);
 
-    if (statErr || !stats.isFile()) {
-      const htmlCandidate = `${filePath}.html`;
-      const resolvedHtml = path.resolve(htmlCandidate);
+  if (!stats) {
+    const asHtml = `${requestedPath}.html`;
+    if (asHtml.startsWith(ROOT + path.sep)) stats = statFile(asHtml), finalPath = asHtml;
+  }
+  if (!stats) {
+    const asIndex = path.join(requestedPath, 'index.html');
+    stats = statFile(asIndex);
+    if (stats) finalPath = asIndex;
+  }
+  if (!stats) {
+    sendError(res, 404, 'That page could not be found.', isHead);
+    return;
+  }
 
-      if (resolvedHtml.startsWith(ROOT + path.sep) && fs.existsSync(resolvedHtml) && fs.statSync(resolvedHtml).isFile()) {
-        finalPath = resolvedHtml;
-        finalStats = fs.statSync(resolvedHtml);
-      } else {
-        const indexCandidate = path.join(filePath, 'index.html');
-        if (fs.existsSync(indexCandidate) && fs.statSync(indexCandidate).isFile()) {
-          finalPath = indexCandidate;
-          finalStats = fs.statSync(indexCandidate);
-        } else {
-          sendError(res, 404, 'That page could not be found.', isHead);
-          return;
-        }
-      }
-    }
+  const ext = path.extname(finalPath).toLowerCase();
+  const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+  const etag = `W/"${stats.size.toString(16)}-${stats.mtimeMs.toString(16)}"`;
 
-    const ext = path.extname(finalPath).toLowerCase();
-    const isHtml = ext === '.html';
-    const etag = `W/"${finalStats.size.toString(16)}-${finalStats.mtimeMs.toString(16)}"`;
+  if (req.headers['if-none-match'] === etag) {
+    res.writeHead(304, { ETag: etag, 'Accept-Ranges': 'bytes' });
+    res.end();
+    return;
+  }
 
-    if (req.headers['if-none-match'] === etag) {
-      res.writeHead(304, { ETag: etag });
+  const baseHeaders = {
+    'Content-Type': contentType,
+    'Last-Modified': stats.mtime.toUTCString(),
+    ETag: etag,
+    'Cache-Control': ext === '.html' ? 'no-cache' : 'public, max-age=3600',
+    'X-Content-Type-Options': 'nosniff',
+    'Accept-Ranges': 'bytes'
+  };
+
+  // Partial content for video/audio seeking.
+  if (req.headers.range) {
+    const range = parseRange(req.headers.range, stats.size);
+
+    if (!range) {
+      res.writeHead(416, Object.assign({}, baseHeaders, { 'Content-Range': `bytes */${stats.size}` }));
       res.end();
       return;
     }
 
-    res.writeHead(200, {
-      'Content-Type': MIME_TYPES[ext] || 'application/octet-stream',
-      'Content-Length': finalStats.size,
-      'Last-Modified': finalStats.mtime.toUTCString(),
-      ETag: etag,
-      'Cache-Control': isHtml ? 'no-cache' : 'public, max-age=3600',
-      'X-Content-Type-Options': 'nosniff'
-    });
+    res.writeHead(206, Object.assign({}, baseHeaders, {
+      'Content-Range': `bytes ${range.start}-${range.end}/${stats.size}`,
+      'Content-Length': range.end - range.start + 1
+    }));
 
     if (isHead) {
       res.end();
       return;
     }
 
-    const stream = createReadStream(finalPath);
-    stream.on('error', () => {
-      if (!res.headersSent) sendError(res, 500, 'Something went wrong.', false);
-      else res.destroy();
-    });
-    stream.pipe(res);
+    const partial = createReadStream(finalPath, { start: range.start, end: range.end });
+    partial.on('error', () => res.destroy());
+    partial.pipe(res);
+    return;
+  }
+
+  res.writeHead(200, Object.assign({}, baseHeaders, { 'Content-Length': stats.size }));
+
+  if (isHead) {
+    res.end();
+    return;
+  }
+
+  const stream = createReadStream(finalPath);
+  stream.on('error', () => {
+    if (!res.headersSent) sendError(res, 500, 'Something went wrong.', isHead);
+    else res.destroy();
   });
+  stream.pipe(res);
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`Kojo Adjei Couture preview running on http://${HOST}:${PORT}`);
+  console.log(`Static site running on http://${HOST}:${PORT}`);
 });
 
 function shutdown() {
