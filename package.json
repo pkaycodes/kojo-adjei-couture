@@ -1,0 +1,13 @@
+{
+  "name": "fk-lounge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Kojo Adjei Couture — launch preview site (static)",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  }
+}
