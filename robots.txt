@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /404.html
+
+Sitemap: https://pkaycodes.github.io/kojo-adjei-couture/sitemap.xml

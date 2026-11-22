@@ -10,7 +10,25 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..700;1,6..96,400..500&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%2312100E'/%3E%3Ctext x='32' y='43' font-family='Didot,Georgia,serif' font-size='26' letter-spacing='1' fill='%23C0A275' text-anchor='middle'%3EKA%3C/text%3E%3C/svg%3E">
+<link rel="canonical" href="https://pkaycodes.github.io/kojo-adjei-couture/">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Kojo Adjei Couture">
+<meta property="og:locale" content="en_GB">
+<meta property="og:title" content="Kojo Adjei Couture — Coming Soon, Accra">
+<meta property="og:description" content="A new house of made-to-measure tailoring in Accra. Hand-loomed cloth, unhurried construction, and a first collection still under wraps — previewed here, ahead of release.">
+<meta property="og:url" content="https://pkaycodes.github.io/kojo-adjei-couture/">
+<meta property="og:image" content="https://pkaycodes.github.io/kojo-adjei-couture/assets/img/og-cover.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Kojo Adjei Couture — the debut collection is coming soon, Accra.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Kojo Adjei Couture — Coming Soon, Accra">
+<meta name="twitter:description" content="Made-to-measure tailoring in Accra. Hand-loomed cloth, unhurried construction. The debut collection is coming soon.">
+<meta name="twitter:image" content="https://pkaycodes.github.io/kojo-adjei-couture/assets/img/og-cover.jpg">
 <script>document.documentElement.className += ' js';</script>
 </head>
 <body class="is-locked">
@@ -351,6 +369,34 @@
         <span class="wa-arrow" aria-hidden="true">&rarr;</span>
       </a>
 
+      <form class="enquiry-form reveal" id="enquiry-form" novalidate>
+        <p class="form-kicker">Or send a note</p>
+        <div class="ef-row">
+          <div class="field">
+            <label for="ef-name">Name</label>
+            <input id="ef-name" name="name" type="text" autocomplete="name" required minlength="2" aria-describedby="ef-name-err">
+            <p class="field-err" id="ef-name-err"></p>
+          </div>
+          <div class="field">
+            <label for="ef-email">Email</label>
+            <input id="ef-email" name="email" type="email" autocomplete="email" inputmode="email" required aria-describedby="ef-email-err">
+            <p class="field-err" id="ef-email-err"></p>
+          </div>
+        </div>
+        <div class="field">
+          <label for="ef-message">Message</label>
+          <textarea id="ef-message" name="message" rows="4" required minlength="10" aria-describedby="ef-message-err"></textarea>
+          <p class="field-err" id="ef-message-err"></p>
+        </div>
+        <div class="hp" aria-hidden="true">
+          <label for="ef-company">Company</label>
+          <input id="ef-company" name="company" type="text" tabindex="-1" autocomplete="off">
+        </div>
+        <button class="btn btn-paper" type="submit">Send on WhatsApp</button>
+        <p class="form-note">Opens WhatsApp with your message ready to send. Nothing is stored on this site.</p>
+        <p class="form-status" id="ef-status" role="status" aria-live="polite"></p>
+      </form>
+
       <ul class="enquire-meta reveal">
         <li><span>Atelier</span>Accra, Ghana</li>
         <li><span>Appointments</span>Monday &ndash; Saturday</li>
@@ -371,6 +417,8 @@
         <a href="#collection">Collection</a>
         <a href="#atelier">Atelier</a>
         <a href="#enquire">Enquire</a>
+        <a href="privacy.html">Privacy</a>
+        <a href="terms.html">Terms</a>
       </nav>
       <a class="footer-wa" href="https://wa.me/233504343113?text=Hello%20Kojo%20Adjei%20Couture%20%E2%80%94%20I%27d%20like%20to%20know%20when%20the%20collection%20launches." target="_blank" rel="noopener">
         <svg class="wa-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38c1.45.79 3.08 1.21 4.79 1.21 5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2zm5.8 14.02c-.24.68-1.4 1.3-1.93 1.35-.53.05-1.02.24-3.44-.72-2.92-1.15-4.77-4.13-4.91-4.32-.14-.19-1.17-1.56-1.17-2.98 0-1.42.74-2.11 1.01-2.4.26-.29.57-.36.76-.36.19 0 .38 0 .55.01.18.01.41-.07.64.49.24.58.81 1.99.88 2.13.07.14.12.31.02.5-.1.19-.15.31-.29.48-.14.17-.3.38-.43.51-.14.14-.29.29-.12.57.17.29.75 1.24 1.61 2.01 1.11 1 2.05 1.31 2.34 1.46.29.14.46.12.63-.07.17-.19.72-.84.91-1.13.19-.29.38-.24.64-.14.26.1 1.66.78 1.95.93.29.14.48.21.55.33.07.12.07.68-.17 1.36z"/></svg>
@@ -380,6 +428,7 @@
 
     <div class="footer-bottom">
       <p class="footer-colophon">Made-to-measure tailoring, Accra. The debut collection is coming soon — not yet available for purchase.</p>
+      <p class="footer-legal">Operated by <a href="https://fkmediagroup.com" target="_blank" rel="noopener">FK Media Group</a></p>
       <p class="footer-copy">&copy; <span id="year">2026</span> Kojo Adjei Couture</p>
     </div>
   </div>
@@ -394,6 +443,14 @@
     <figcaption id="lb-cap"></figcaption>
   </figure>
   <button class="lb-btn lb-next" id="lb-next" type="button" aria-label="Next image">&rarr;</button>
+</div>
+
+<div class="consent" id="consent" role="region" aria-label="Cookies and local storage" hidden>
+  <p class="consent-text">This site stores one small preference on your device to remember your cookie choice. No advertising or analytics cookies are set. <a href="privacy.html">Privacy policy</a></p>
+  <div class="consent-actions">
+    <button class="btn btn-paper" type="button" data-consent="accept">Accept</button>
+    <button class="btn btn-ghost consent-decline" type="button" data-consent="decline">Decline</button>
+  </div>
 </div>
 
 <script src="script.js"></script>

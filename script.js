@@ -185,6 +185,111 @@
     });
   }
 
+  /* ── cookie / storage notice ────────────────────────────── */
+  var consent = document.getElementById('consent');
+  var CONSENT_KEY = 'kaj-consent';
+
+  function readConsent() {
+    try { return window.localStorage.getItem(CONSENT_KEY); } catch (err) { return null; }
+  }
+
+  if (consent && !readConsent()) {
+    consent.hidden = false;
+    consent.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-consent]');
+      if (!btn) return;
+      try {
+        window.localStorage.setItem(CONSENT_KEY, btn.getAttribute('data-consent'));
+      } catch (err) { /* private mode — the notice simply returns next visit */ }
+      consent.hidden = true;
+    });
+  }
+
+  /* ── enquiry form ───────────────────────────────────────── */
+  var form = document.getElementById('enquiry-form');
+  var WA_NUMBER = '233504343113';
+
+  if (form) {
+    var formLoadedAt = Date.now();
+    var status = document.getElementById('ef-status');
+
+    var fields = {
+      name: {
+        input: document.getElementById('ef-name'),
+        err: document.getElementById('ef-name-err'),
+        min: 2,
+        message: 'Please tell us your name.'
+      },
+      email: {
+        input: document.getElementById('ef-email'),
+        err: document.getElementById('ef-email-err'),
+        min: 0,
+        message: 'Please enter a valid email address.'
+      },
+      message: {
+        input: document.getElementById('ef-message'),
+        err: document.getElementById('ef-message-err'),
+        min: 10,
+        message: 'A sentence or two is enough — at least 10 characters.'
+      }
+    };
+
+    function validEmail(value) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value);
+    }
+
+    function check(field, key) {
+      var value = field.input.value.trim();
+      var bad = key === 'email' ? !validEmail(value) : value.length < field.min;
+      field.err.textContent = bad ? field.message : '';
+      field.input.closest('.field').classList.toggle('is-invalid', bad);
+      field.input.setAttribute('aria-invalid', bad ? 'true' : 'false');
+      return bad;
+    }
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      var firstBad = null;
+      Object.keys(fields).forEach(function (key) {
+        if (check(fields[key], key) && !firstBad) firstBad = fields[key].input;
+      });
+
+      if (firstBad) {
+        status.textContent = 'Please check the highlighted fields.';
+        firstBad.focus();
+        return;
+      }
+
+      // Spam traps: the hidden field must stay empty, and a real person takes
+      // more than a couple of seconds to fill three fields.
+      var trap = document.getElementById('ef-company');
+      if ((trap && trap.value) || Date.now() - formLoadedAt < 2500) {
+        status.textContent = 'Thanks — your message is ready to send.';
+        form.reset();
+        return;
+      }
+
+      var body = 'Hello Kojo Adjei Couture — I\'d like to know when the collection launches.\n\n' +
+        'Name: ' + fields.name.input.value.trim() + '\n' +
+        'Email: ' + fields.email.input.value.trim() + '\n\n' +
+        fields.message.input.value.trim();
+
+      status.textContent = 'Opening WhatsApp with your message ready to send…';
+      window.open('https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(body), '_blank', 'noopener');
+    });
+
+    Object.keys(fields).forEach(function (key) {
+      var field = fields[key];
+      field.input.addEventListener('blur', function () {
+        if (field.input.value.trim()) check(field, key);
+      });
+      field.input.addEventListener('input', function () {
+        if (field.input.closest('.field').classList.contains('is-invalid')) check(field, key);
+      });
+    });
+  }
+
   /* ── year ───────────────────────────────────────────────── */
   var year = document.getElementById('year');
   if (year) year.textContent = new Date().getFullYear();
